@@ -1,5 +1,6 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const express = require('express');
+const qrcode = require('qrcode');
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: './session' }),
@@ -10,6 +11,31 @@ const client = new Client({
 });
 
 const LINK_PRESUPUESTO = 'https://atelierautomatiza.com.ar/#presupuesto';
+
+// --- Servidor web para ver el QR desde el navegador ---
+let ultimoQR = null;
+const app = express();
+
+app.get('/qr', async (req, res) => {
+  if (!ultimoQR) {
+    return res.send('<h2>No hay QR pendiente. El bot ya está conectado, o todavía no generó uno (esperá unos segundos y refrescá).</h2>');
+  }
+  const imagen = await qrcode.toDataURL(ultimoQR);
+  res.send(`
+    <html>
+      <body style="display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#111;">
+        <div style="text-align:center;">
+          <img src="${imagen}" style="width:300px;height:300px;" />
+          <p style="color:#fff;font-family:sans-serif;">Escaneá con WhatsApp → Dispositivos vinculados</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log('Servidor de QR escuchando');
+});
 
 // Usuarios a los que ya se les cortó el bot (no se responde más hasta que escriban "menu")
 const finalizados = new Set();
@@ -25,10 +51,12 @@ const MENU = `¡Hola! 👋 Bienvenido a *Atelier Automatiza*.
 Respondé con el número de la opción.`;
 
 client.on('qr', (qr) => {
-  qrcode.generate(qr, { small: true });
+  ultimoQR = qr;
+  console.log('Nuevo QR generado, entrá a /qr para escanearlo');
 });
 
 client.on('ready', () => {
+  ultimoQR = null;
   console.log('Bot de Atelier Automatiza listo ✅');
 });
 
