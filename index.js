@@ -1,6 +1,30 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const express = require('express');
 const qrcode = require('qrcode');
+const fs = require('fs');
+const path = require('path');
+
+// Borra los archivos "Singleton*" que Chromium deja trabados si el proceso
+// anterior se cayó de golpe (crash) en vez de cerrarse limpio. Sin esto,
+// el bot queda en loop de crashes al reiniciar sobre un volumen persistente.
+function limpiarLocksChromium(dir) {
+  if (!fs.existsSync(dir)) return;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      limpiarLocksChromium(fullPath);
+    } else if (entry.name.startsWith('Singleton')) {
+      try {
+        fs.unlinkSync(fullPath);
+        console.log('Lock de Chromium eliminado:', fullPath);
+      } catch (e) {
+        console.log('No se pudo borrar el lock:', fullPath, e.message);
+      }
+    }
+  }
+}
+
+limpiarLocksChromium(path.join(__dirname, 'session'));
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: './session' }),
