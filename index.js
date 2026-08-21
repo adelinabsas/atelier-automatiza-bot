@@ -78,7 +78,7 @@ const MENU = `¡Hola! 👋 Bienvenido a *Atelier Automatiza*.
 
 1️⃣ Pedir presupuesto
 2️⃣ Ya tengo presupuesto
-3️⃣ Tengo dudas adicionales
+3️⃣ Prefiero pedirte mi presupuesto por acá
 
 Respondé con el número de la opción.`;
 
@@ -119,7 +119,7 @@ client.on('message', async (msg) => {
       break;
 
     case '3':
-      await msg.reply('Ya va a estar alguien ayudándote con tus dudas. ¡Gracias por escribirnos!');
+      await msg.reply('¡Dale! Dejame tu idea acá y en breve te contactamos para armarte el presupuesto.');
       finalizados.add(from);
       break;
 
