@@ -82,23 +82,94 @@ client.on('ready', () => {
 //   'rubro_elegido'  -> ya eligió y le mandamos (o le vamos a mandar) su mensaje personalizado: se ignora todo lo demás
 const estados = new Map();
 
-const MENSAJE_ESPERA = `Hola! Gracias por contactarte con Atelier Automatiza. En breve alguien se va a poner en contacto con vos para armar algo ideal para tu negocio 🙌`;
+const MENSAJE_ESPERA = `Hola! Gracias por contactarte con Atelier Automatiza. En breve alguien se va a poner en contacto con vos para armar algo ideal para tu negocio`;
 
 const MENSAJE_MENU = `Hola! Como estas? Soy Agustina.
-Buenísimo 😊 Para empezar y orientarte mejor, qué tipo de negocio tenés?
+Para empezar y orientarte mejor, qué tipo de negocio tenés?
 1️⃣ Vendo productos (e-commerce)
 2️⃣ Servicios profesionales o consultoría
 3️⃣ Trabajo con turnos o reservas (salud, belleza, fitness, gastronomía, etc.)
 4️⃣ Inmobiliaria, turismo o eventos
 5️⃣ Otro rubro`;
 
+// Cada mensaje separado en párrafos (con saltos de línea) para que se lea fácil en WhatsApp
 const RUBRO_MESSAGES = {
-  '1': `Buenísimo! 🙌 Si vendés productos, te ayudamos a automatizar tus ventas para que factures más sin trabajar más. Podemos armarte: 🛒 Bot de ventas por WhatsApp: tus clientes ven el catálogo, consultan precios y hacen el pedido, sin que tengas que responder uno por uno. 📋 Catálogo digital siempre actualizado y fácil de compartir. 🔁 Recordatorios para carritos abandonados: recuperá ventas que se estaban por perder. 🌐 Tienda online propia: para vender también fuera de WhatsApp, con presencia profesional. Contame qué te interesa y te preparo un presupuesto a medida 👇`,
-  '2': `Buenísimo! 🙌 Si ofrecés servicios profesionales, te ayudamos a que tus clientes te encuentren, confíen y te contraten más fácil. Podemos armarte: 🤖 Bot de WhatsApp que responde consultas y agenda reuniones automáticamente, sin que tengas que estar pendiente del chat. 🌐 Página web profesional: para mostrar tu experiencia y generar confianza. 📋 Catálogo digital de tus servicios y honorarios. 💬 Mensajes automáticos de seguimiento a clientes que consultaron y no cerraron. Contame qué te interesa y te preparo un presupuesto a medida 👇`,
-  '3': `Buenísimo! 🙌 Si trabajás con turnos, te ayudamos a automatizar la gestión de tus clientes para que tengas menos trabajo y no pierdas oportunidades. Podemos armarte: 🤖 Reservas automáticas por WhatsApp: tus clientes consultan horarios, eligen su turno y reciben la confirmación, sin que tengas que responder uno por uno. 🔔 Recordatorios automáticos: para reducir ausencias y mantener a tus clientes al día con sus turnos. 💬 Mensajes automáticos para reactivar clientes que hace tiempo no reservan. 🌐 Página web profesional: para mostrar tus servicios, generar confianza y que nuevos clientes te contacten o reserven. La idea es armar un sistema adaptado a tu negocio, para que vos te ocupes de tus clientes y lo demás funcione solo. Contame qué te interesa y te preparo un presupuesto a medida 👇`,
-  '4': `Buenísimo! 🙌 Te ayudamos a que ninguna consulta se te escape y cierres más reservas. Podemos armarte: 🤖 Bot de WhatsApp que responde consultas al instante (propiedades, paquetes, disponibilidad) y deriva las que necesitan atención personal. 🌐 Página web profesional para mostrar tus propiedades, paquetes o salones. 📋 Catálogo digital siempre actualizado y fácil de compartir. 🔔 Recordatorios y seguimiento automático para no perder clientes interesados. Contame qué te interesa y te preparo un presupuesto a medida 👇`,
-  '5': `Contame, cuál es tu rubro? Así te cuento qué podemos armarte a medida 👇`
+  '1': `Buenísimo! Si vendés productos, te ayudamos a automatizar tus ventas para que factures más sin trabajar más.
+
+Podemos armarte:
+- Bot de ventas por WhatsApp: tus clientes ven el catálogo, consultan precios y hacen el pedido, sin que tengas que responder uno por uno.
+- Catálogo digital siempre actualizado y fácil de compartir.
+- Recordatorios para carritos abandonados, para recuperar ventas que se estaban por perder.
+- Tienda online propia, para vender también fuera de WhatsApp con presencia profesional.
+
+Contame qué te interesa y te preparo un presupuesto a medida`,
+
+  '2': `Buenísimo! Si ofrecés servicios profesionales, te ayudamos a que tus clientes te encuentren, confíen y te contraten más fácil.
+
+Podemos armarte:
+- Bot de WhatsApp que responde consultas y agenda reuniones automáticamente, sin que tengas que estar pendiente del chat.
+- Página web profesional, para mostrar tu experiencia y generar confianza.
+- Catálogo digital de tus servicios y honorarios.
+- Mensajes automáticos de seguimiento a clientes que consultaron y no cerraron.
+
+Contame qué te interesa y te preparo un presupuesto a medida`,
+
+  '3': `Buenísimo! Si trabajás con turnos, te ayudamos a automatizar la gestión de tus clientes para que tengas menos trabajo y no pierdas oportunidades.
+
+Podemos armarte:
+- Reservas automáticas por WhatsApp: tus clientes consultan horarios, eligen su turno y reciben la confirmación, sin que tengas que responder uno por uno.
+- Recordatorios automáticos, para reducir ausencias y mantener a tus clientes al día con sus turnos.
+- Mensajes automáticos para reactivar clientes que hace tiempo no reservan.
+- Página web profesional, para mostrar tus servicios, generar confianza y que nuevos clientes te contacten o reserven.
+
+La idea es armar un sistema adaptado a tu negocio, para que vos te ocupes de tus clientes y lo demás funcione solo.
+
+Contame qué te interesa y te preparo un presupuesto a medida`,
+
+  '4': `Buenísimo! Te ayudamos a que ninguna consulta se te escape y cierres más reservas.
+
+Podemos armarte:
+- Bot de WhatsApp que responde consultas al instante (propiedades, paquetes, disponibilidad) y deriva las que necesitan atención personal.
+- Página web profesional para mostrar tus propiedades, paquetes o salones.
+- Catálogo digital siempre actualizado y fácil de compartir.
+- Recordatorios y seguimiento automático para no perder clientes interesados.
+
+Contame qué te interesa y te preparo un presupuesto a medida`,
+
+  '5': `Contame, cuál es tu rubro? Así te cuento qué podemos armarte a medida`
 };
+
+// Palabras clave para reconocer el rubro aunque no respondan solo con el número
+const RUBRO_KEYWORDS = {
+  '1': ['producto', 'productos', 'ecommerce', 'e-commerce', 'vendo', 'venta', 'ventas', 'tienda'],
+  '2': ['servicio', 'servicios', 'consultoria', 'profesional', 'profesionales', 'consultor'],
+  '3': ['turno', 'turnos', 'reserva', 'reservas', 'salud', 'belleza', 'fitness', 'gastronomia', 'gym', 'gimnasio', 'peluqueria', 'estetica'],
+  '4': ['inmobiliaria', 'inmobiliarias', 'turismo', 'evento', 'eventos', 'propiedad', 'propiedades', 'alquiler'],
+  '5': ['otro', 'otros']
+};
+
+function quitarAcentos(texto) {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Devuelve '1'..'5' si reconoce el número o alguna palabra clave, o null si no entendió nada
+function detectarRubro(textoOriginal) {
+  const texto = quitarAcentos(textoOriginal.toLowerCase().trim());
+
+  if (['1', '2', '3', '4', '5'].includes(texto)) {
+    return texto;
+  }
+
+  for (const [numero, palabras] of Object.entries(RUBRO_KEYWORDS)) {
+    for (const palabra of palabras) {
+      if (texto.includes(palabra)) {
+        return numero;
+      }
+    }
+  }
+
+  return null;
+}
 
 client.on('message', async (msg) => {
   const from = msg.from;
@@ -110,15 +181,18 @@ client.on('message', async (msg) => {
     return;
   }
 
-  // Ya le llegó el menú, esperando que responda con su rubro
+  // Ya le llegó el menú: se evalúa SOLO este primer mensaje que manda después (por número o por palabra clave).
+  // No importa si matchea o no, después de este mensaje se corta la detección automática (pasa a estado 'rubro_elegido')
+  // para no seguir escaneando el resto de la conversación en busca de una palabra suelta.
   if (estado === 'menu_enviado') {
-    if (['1', '2', '3', '4', '5'].includes(texto)) {
-      estados.set(from, 'rubro_elegido');
+    const rubro = detectarRubro(texto);
+    estados.set(from, 'rubro_elegido');
+    if (rubro) {
       setTimeout(async () => {
-        await client.sendMessage(from, RUBRO_MESSAGES[texto]);
+        await client.sendMessage(from, RUBRO_MESSAGES[rubro]);
       }, 2 * 60 * 1000); // 2 minutos
     }
-    // si no responde con un número del 1 al 5, se ignora (no le contestamos nada)
+    // Si no entendió nada en ese primer mensaje, no contesta nada más (para que no parezca un bot)
     return;
   }
 
