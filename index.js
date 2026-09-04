@@ -75,11 +75,12 @@ client.on('ready', () => {
 });
 
 // --- Flujo de bienvenida ---
-
-// numeros que ya recibieron el mensaje de espera (tienen el timer de 4 min corriendo)
-const esperandoMenu = new Set();
-// numeros que ya eligieron su rubro (tienen el timer de 2 min corriendo) — se ignora todo lo que escriban mientras tanto
-const yaEligioRubro = new Set();
+// Un solo estado por número, para no tener condiciones que se pisen entre sí:
+//   (sin estado)     -> primer contacto
+//   'esperando_menu' -> ya recibió el msg de espera, el menú todavía no salió (timer de 4 min corriendo)
+//   'menu_enviado'   -> ya le llegó el menú, esperando que responda con su rubro
+//   'rubro_elegido'  -> ya eligió y le mandamos (o le vamos a mandar) su mensaje personalizado: se ignora todo lo demás
+const estados = new Map();
 
 const MENSAJE_ESPERA = `Hola! Gracias por contactarte con Atelier Automatiza. En breve alguien se va a poner en contacto con vos para armar algo ideal para tu negocio 🙌`;
 
@@ -102,32 +103,37 @@ const RUBRO_MESSAGES = {
 client.on('message', async (msg) => {
   const from = msg.from;
   const texto = msg.body.trim();
+  const estado = estados.get(from);
 
-  // Ya eligió su rubro y está esperando el mensaje personalizado: no le contestamos nada más
-  if (yaEligioRubro.has(from)) {
+  // Ya eligió su rubro: se ignora todo lo que escriba de acá en más
+  if (estado === 'rubro_elegido') {
     return;
   }
 
-  // Ya recibió el menú y está respondiendo con el número de su rubro
-  if (esperandoMenu.has(from) && ['1', '2', '3', '4', '5'].includes(texto)) {
-    yaEligioRubro.add(from);
-    setTimeout(async () => {
-      await client.sendMessage(from, RUBRO_MESSAGES[texto]);
-    }, 2 * 60 * 1000); // 2 minutos
+  // Ya le llegó el menú, esperando que responda con su rubro
+  if (estado === 'menu_enviado') {
+    if (['1', '2', '3', '4', '5'].includes(texto)) {
+      estados.set(from, 'rubro_elegido');
+      setTimeout(async () => {
+        await client.sendMessage(from, RUBRO_MESSAGES[texto]);
+      }, 2 * 60 * 1000); // 2 minutos
+    }
+    // si no responde con un número del 1 al 5, se ignora (no le contestamos nada)
+    return;
+  }
+
+  // Ya recibió el mensaje de espera, pero el menú todavía no salió: se ignora lo que escriba mientras tanto
+  if (estado === 'esperando_menu') {
     return;
   }
 
   // Primer contacto de este número
-  if (!esperandoMenu.has(from)) {
-    esperandoMenu.add(from);
-    await msg.reply(MENSAJE_ESPERA);
-    setTimeout(async () => {
-      await client.sendMessage(from, MENSAJE_MENU);
-    }, 4 * 60 * 1000); // 4 minutos
-    return;
-  }
-
-  // Si ya recibió el menú pero escribe algo que no es un número del 1 al 5, se ignora
+  estados.set(from, 'esperando_menu');
+  await msg.reply(MENSAJE_ESPERA);
+  setTimeout(async () => {
+    estados.set(from, 'menu_enviado');
+    client.sendMessage(from, MENSAJE_MENU);
+  }, 4 * 60 * 1000); // 4 minutos
 });
 
 client.initialize();
