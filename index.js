@@ -69,8 +69,14 @@ client.on('qr', (qr) => {
   console.log('Nuevo QR generado, entrá a /qr para escanearlo');
 });
 
+// Momento en el que el bot queda activo. Se usa para ignorar mensajes
+// que ya estaban pendientes de antes (conversaciones viejas) y que
+// WhatsApp puede entregar de golpe al reconectar.
+let horaActivacion = null;
+
 client.on('ready', () => {
   ultimoQR = null;
+  horaActivacion = Date.now();
   console.log('Bot de Atelier Automatiza listo ✅');
 });
 
@@ -84,13 +90,15 @@ const estados = new Map();
 
 const MENSAJE_ESPERA = `Hola! Gracias por contactarte con Atelier Automatiza. En breve alguien se va a poner en contacto con vos para armar algo ideal para tu negocio`;
 
-const MENSAJE_MENU = `Hola! Como estas? Soy Agustina.
-Para empezar y orientarte mejor, qué tipo de negocio tenés?
-1️⃣ Vendo productos (e-commerce)
-2️⃣ Servicios profesionales o consultoría
-3️⃣ Trabajo con turnos o reservas (salud, belleza, fitness, gastronomía, etc.)
-4️⃣ Inmobiliaria, turismo o eventos
-5️⃣ Otro rubro`;
+const MENSAJE_AGUSTINA_1 = `Hola! Como estas? Soy Agustina`;
+
+const MENSAJE_AGUSTINA_2 = `Para empezar y orientarte mejor, qué tipo de negocio tenés?`;
+
+const MENSAJE_AGUSTINA_3 = `Vendo productos (e-commerce)
+Servicios profesionales o consultoría
+Trabajo con turnos o reservas (salud, belleza, fitness, gastronomía, etc.)
+Inmobiliaria, turismo o eventos
+Otro rubro`;
 
 // Cada mensaje separado en párrafos (con saltos de línea) para que se lea fácil en WhatsApp
 const RUBRO_MESSAGES = {
@@ -172,6 +180,12 @@ function detectarRubro(textoOriginal) {
 }
 
 client.on('message', async (msg) => {
+  // Mensaje de una conversación vieja, de antes de activar el bot: se ignora.
+  // (msg.timestamp viene en segundos, horaActivacion en milisegundos)
+  if (horaActivacion && msg.timestamp * 1000 < horaActivacion) {
+    return;
+  }
+
   const from = msg.from;
   const texto = msg.body.trim();
   const estado = estados.get(from);
@@ -206,7 +220,13 @@ client.on('message', async (msg) => {
   await msg.reply(MENSAJE_ESPERA);
   setTimeout(async () => {
     estados.set(from, 'menu_enviado');
-    client.sendMessage(from, MENSAJE_MENU);
+    await client.sendMessage(from, MENSAJE_AGUSTINA_1);
+    setTimeout(async () => {
+      await client.sendMessage(from, MENSAJE_AGUSTINA_2);
+      setTimeout(async () => {
+        await client.sendMessage(from, MENSAJE_AGUSTINA_3);
+      }, 3000); // 3 segundos entre mensaje 2 y 3
+    }, 4000); // 4 segundos entre mensaje 1 y 2
   }, 4 * 60 * 1000); // 4 minutos
 });
 
