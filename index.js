@@ -36,7 +36,11 @@ const client = new Client({
       '--disable-accelerated-2d-canvas',
       '--no-first-run',
       '--no-zygote',
-      '--disable-gpu'
+      '--disable-gpu',
+      '--disable-extensions',
+      '--disk-cache-size=0',
+      '--disable-software-rasterizer',
+      '--disable-background-networking',
     ]
   }
 });
